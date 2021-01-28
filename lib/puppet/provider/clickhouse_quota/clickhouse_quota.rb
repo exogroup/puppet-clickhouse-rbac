@@ -5,19 +5,21 @@ Puppet::Type.type(:clickhouse_quota).provide(:clickhouse, parent: Puppet::Provid
   def self.instances
     instances = []
     quotas.map do |row|
+
       new(
         ensure:             :present,
-        id:                 row['id'],
         name:               row['name'],
-        interval:           row['duration'],
-        max_queries:        row['max_queries'],
-        max_errors:         row['max_errors'],
-        max_result_rows:    row['max_result_rows'],
-        max_result_bytes:   row['max_result_bytes'],
-        max_read_rows:      row['max_read_rows'],
-        max_read_bytes:     row['max_read_bytes'],
-        max_execution_time: row['max_execution_time'],
+        randomized:         row['is_randomized_interval'].to_i == 1 ? :true : :false,
+        duration:           row['durations'].first,
+        queries:            row['max_queries'].to_i,
+        errors:             row['max_errors'].to_i,
+        result_rows:        row['max_result_rows'].to_i,
+        result_bytes:       row['max_result_bytes'].to_i,
+        read_rows:          row['max_read_rows'].to_i,
+        read_bytes:         row['max_read_bytes'].to_i,
+        execution_time:     row['max_execution_time'].to_i,
         user:               row['apply_to_list'].sort,
+        keys:               row['keys'].empty?? [ :none ] : row['keys'].sort,
       )
     end
   end
@@ -27,7 +29,7 @@ Puppet::Type.type(:clickhouse_quota).provide(:clickhouse, parent: Puppet::Provid
   # All the magic goes here
   def flush
     quota_name = @resource[:name]
-    quota_interval = @resource[:interval]
+    quota_duration = @resource[:duration]
 
     # Drop quota when needed
     if @property_hash[:ensure] == :absent
@@ -40,7 +42,12 @@ Puppet::Type.type(:clickhouse_quota).provide(:clickhouse, parent: Puppet::Provid
     # FIXME: 'OR REPLACE' is used in place of 'ALTER' to avoid issues when
     # changing the duration interval, resulting in multiple rows being
     # created in the system.quota_limits table. Needs proper implementation.
-    sql = "CREATE QUOTA OR REPLACE '#{quota_name}' #{on_cluster} FOR INTERVAL #{quota_interval} SECOND #{quota_settings} #{quota_user}"
+    sql = (<<~SQL)
+      CREATE QUOTA OR REPLACE '#{quota_name}' #{on_cluster}
+      #{quota_keys} FOR #{quota_randomized} INTERVAL #{quota_duration}
+      SECOND #{quota_settings}
+      #{quota_user}
+    SQL
     query(sql)
   end
 
@@ -48,13 +55,13 @@ Puppet::Type.type(:clickhouse_quota).provide(:clickhouse, parent: Puppet::Provid
   def quota_settings
     settings = []
     {
-      'MAX QUERIES'        => @resource[:max_queries],
-      'MAX ERRORS'         => @resource[:max_errors],
-      'MAX RESULT ROWS'    => @resource[:max_result_rows],
-      'MAX RESULT BYTES'   => @resource[:max_result_bytes],
-      'MAX READ ROWS'      => @resource[:max_read_rows],
-      'MAX READ BYTES'     => @resource[:max_read_bytes],
-      'MAX EXECUTION TIME' => @resource[:max_execution_time],
+      'MAX QUERIES'        => @resource[:queries],
+      'MAX ERRORS'         => @resource[:errors],
+      'MAX RESULT ROWS'    => @resource[:result_rows],
+      'MAX RESULT BYTES'   => @resource[:result_bytes],
+      'MAX READ ROWS'      => @resource[:read_rows],
+      'MAX READ BYTES'     => @resource[:read_bytes],
+      'MAX EXECUTION TIME' => @resource[:execution_time],
     }.each do |setting, value|
       settings << "#{setting} = #{value}" unless value.nil?
     end
@@ -66,4 +73,14 @@ Puppet::Type.type(:clickhouse_quota).provide(:clickhouse, parent: Puppet::Provid
     user = @resource[:user].join(', ')
     "TO #{user}" unless user.empty?
   end
+
+  def quota_randomized
+    'RANDOMIZED' if @resource[:randomized] == :true
+  end
+
+  def quota_keys
+    keys = Array(@resource[:keys]).map(&:to_s).join(', ')
+    "KEYED BY #{keys}" unless keys.empty?
+  end
+
 end

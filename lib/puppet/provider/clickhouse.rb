@@ -21,7 +21,10 @@ class Puppet::Provider::Clickhouse < Puppet::Provider
   def self.query(sql, json=false)
     sql_flatten = sql.gsub(/[\n|\s]+/,' ').strip
     opts = [ '-q', sql_flatten ]
-    opts.push([ '--format', 'JSON' ]) if json
+    if json
+      opts << '--format'
+      opts << 'JSON'
+    end
     res = clickhouse_client(opts.flatten.compact)
     json ? JSON.parse(res) : res.strip
   end
@@ -68,7 +71,14 @@ class Puppet::Provider::Clickhouse < Puppet::Provider
 
   # Lists RBAC quotas
   def self.quotas
-    sql = "SELECT q.*, l.* FROM system.quotas q LEFT JOIN system.quota_limits l ON q.name = l.quota_name WHERE q.storage = 'local directory'"
+    sql = (<<~SQL)
+      SELECT q.*, l.*
+      FROM system.quotas q
+      LEFT JOIN system.quota_limits l
+      ON q.name = l.quota_name
+      WHERE q.storage = 'local directory'
+    SQL
+
     begin
       rows = query(sql, true)
       rows['data']

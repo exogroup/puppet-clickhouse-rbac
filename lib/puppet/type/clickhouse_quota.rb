@@ -7,20 +7,42 @@ Puppet::Type.newtype(:clickhouse_quota) do
     super
 
     settings = [
-      self[:max_queries],
-      self[:max_errors],
-      self[:max_read_rows],
-      self[:max_read_bytes],
-      self[:max_result_rows],
-      self[:max_result_bytes],
-      self[:max_execution_time],
+      self[:queries],
+      self[:errors],
+      self[:read_rows],
+      self[:read_bytes],
+      self[:result_rows],
+      self[:result_bytes],
+      self[:execution_time],
     ].join
 
-    # If no setting is specified, interval duration needs to be 0
-    self[:interval] = 0 if settings.empty?
+    # If no setting is specified (no limit), interval duration has to be 0
+    self[:duration] = 0 if settings.empty?
 
+    # Calculate duration in seconds depending on the specified interval type
+    if self[:duration] > 0 and self[:interval] != :second
+      case self[:interval]
+      when :minute
+        self[:duration] *= 60
+      when :hour
+        self[:duration] *= 3600
+      when :day
+        self[:duration] *= 86400
+      when :week
+        self[:duration] *= 604800
+      when :month
+        self[:duration] *= 2628000
+      when :quarter
+        self[:duration] *= 7884000
+      when :year
+        self[:duration] *= 31536000
+      end
+    end
     # Sort user to match the ones reported by clickhouse
     self[:user] = Array(self[:user]).sort
+
+    # Sort keys to match the ones reported by ClickHouse
+    self[:keys] = Array(self[:keys]).sort
   end
 
   validate do
@@ -49,43 +71,60 @@ Puppet::Type.newtype(:clickhouse_quota) do
     defaultto :true
   end
 
-  newproperty(:interval) do
-    desc "Quota interval in seconds"
+  newproperty(:duration) do
+    desc "Quota duration for the type of interval specified"
     newvalue(/\d+/)
     defaultto 3600
   end
 
-  newproperty(:max_queries) do
+  newparam(:interval) do
+    desc "Type of interval"
+    newvalues(:second, :minute, :hour, :day, :week, :month, :quarter, :year)
+    defaultto :second
+  end
+
+  newproperty(:randomized) do
+    newvalues(:true, :false)
+    defaultto :false
+  end
+
+  newproperty(:keys, array_matching: :all) do
+    desc "Keys specifies how the quota should be shared"
+    newvalues(:user_name, :ip_address, :client_key, :none)
+    defaultto :user_name
+  end
+
+  newproperty(:queries) do
     desc "Max queries number"
     newvalue(/\d+/)
   end
 
-  newproperty(:max_errors) do
+  newproperty(:errors) do
     desc "Max errors number"
     newvalue(/\d+/)
   end
 
-  newproperty(:max_read_rows) do
+  newproperty(:read_rows) do
     desc "Max read rows number"
     newvalue(/\d+/)
   end
 
-  newproperty(:max_read_bytes) do
+  newproperty(:read_bytes) do
     desc "Max read rows bytes"
     newvalue(/\d+/)
   end
 
-  newproperty(:max_result_rows) do
+  newproperty(:result_rows) do
     desc "Max results rows number"
     newvalue(/\d+/)
   end
 
-  newproperty(:max_result_bytes) do
+  newproperty(:result_bytes) do
     desc "Max results bytes"
     newvalue(/\d+/)
   end
 
-  newproperty(:max_execution_time) do
+  newproperty(:execution_time) do
     desc "Max execution time in seconds"
     newvalue(/\d+/)
   end
