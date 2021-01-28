@@ -3,7 +3,16 @@ Puppet::Type.type(:clickhouse_user).provide(:clickhouse, parent: Puppet::Provide
   desc 'Manage users on ClickHouse server'
 
   def self.instances
-    sql = "SELECT u.*, s.inherit_profile AS profile FROM system.users u LEFT JOIN system.settings_profile_elements s ON u.name = s.user_name WHERE storage = 'local directory'"
+    sql = (<<~SQL)
+      SELECT
+        u.*,
+        s.inherit_profile AS profile
+      FROM system.users u
+      LEFT JOIN system.settings_profile_elements s
+      ON u.name = s.user_name
+      WHERE storage = 'local directory'
+    SQL
+
     begin
       rows = query(sql, true)
     rescue

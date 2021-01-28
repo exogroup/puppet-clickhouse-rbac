@@ -5,7 +5,6 @@ Puppet::Type.type(:clickhouse_quota).provide(:clickhouse, parent: Puppet::Provid
   def self.instances
     instances = []
     quotas.map do |row|
-
       new(
         ensure:             :present,
         name:               row['name'],

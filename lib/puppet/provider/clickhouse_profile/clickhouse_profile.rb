@@ -3,7 +3,13 @@ Puppet::Type.type(:clickhouse_profile).provide(:clickhouse, parent: Puppet::Prov
   desc 'Manage settings profiles on ClickHouse server'
 
   def self.instances
-    sql = "SELECT * FROM system.settings_profiles WHERE storage = 'local directory'"
+    sql = (<<~SQL)
+      SELECT
+        *
+      FROM system.settings_profiles
+      WHERE storage = 'local directory'
+    SQL
+
     begin
       rows = query(sql, true)
     rescue
@@ -32,7 +38,11 @@ Puppet::Type.type(:clickhouse_profile).provide(:clickhouse, parent: Puppet::Prov
       return
     end
 
-    sql = "#{action} SETTINGS PROFILE '#{name}' #{on_cluster} SETTINGS #{profile_settings}"
+    sql = (<<~SQL)
+      #{action} SETTINGS PROFILE '#{name}' #{on_cluster}
+      SETTINGS #{profile_settings}
+    SQL
+
     query(sql)
   end
 

@@ -35,7 +35,14 @@ class Puppet::Provider::Clickhouse < Puppet::Provider
 
   # Lists RBAC users
   def self.users
-    sql = "SELECT name FROM system.users WHERE storage = 'local directory' ORDER BY name"
+    sql = (<<~SQL)
+      SELECT
+        name
+      FROM system.users
+      WHERE storage = 'local directory'
+      ORDER BY name
+    SQL
+
     begin
       rows = query(sql).split("\n")
       rows if rows rescue []
@@ -93,7 +100,13 @@ class Puppet::Provider::Clickhouse < Puppet::Provider
 
   # Returns the settings for the specified profile
   def self.get_profile_settings(name)
-    sql = "SELECT * FROM system.settings_profile_elements WHERE profile_name = '#{name}'"
+    sql = (<<~SQL)
+      SELECT
+        *
+      FROM system.settings_profile_elements
+      WHERE profile_name = '#{name}'
+    SQL
+
     rows = query(sql, true)
     res = Hash.new
     rows['data'].each do |row|
