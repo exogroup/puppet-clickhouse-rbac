@@ -22,7 +22,7 @@ Puppet::Type.newtype(:clickhouse_user) do
   newparam(:distributed) do
     desc 'Execute queries using ON CLUSTER statement'
     newvalues(:true, :false)
-    defaultto :true
+    defaultto :false
   end
 
   newproperty(:password_hash) do

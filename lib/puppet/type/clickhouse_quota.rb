@@ -68,7 +68,7 @@ Puppet::Type.newtype(:clickhouse_quota) do
   newparam(:distributed) do
     desc 'Execute queries using ON CLUSTER statement'
     newvalues(:true, :false)
-    defaultto :true
+    defaultto :false
   end
 
   newproperty(:duration) do

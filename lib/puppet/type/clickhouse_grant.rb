@@ -121,7 +121,7 @@ Puppet::Type.newtype(:clickhouse_grant) do
   newparam(:distributed) do
     desc 'Execute queries using ON CLUSTER statement'
     newvalues(:true, :false)
-    defaultto :true
+    defaultto :false
   end
 
   newproperty(:privileges, array_matching: :all) do
