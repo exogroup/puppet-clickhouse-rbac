@@ -16,6 +16,11 @@ class Puppet::Provider::Clickhouse < Puppet::Provider
     end
   end
 
+  # Converts the argument to integer if not nil
+  def self.parseInt(val)
+    val.to_i if val
+  end
+
   # Performs a query in Clickhouse.
   # Supports returning results as-is or in JSON format.
   def self.query(sql, json=false)
