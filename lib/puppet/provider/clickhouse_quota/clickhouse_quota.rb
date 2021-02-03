@@ -6,19 +6,19 @@ Puppet::Type.type(:clickhouse_quota).provide(:clickhouse, parent: Puppet::Provid
     instances = []
     quotas.map do |row|
       new(
-        ensure:             :present,
-        name:               row['name'],
-        randomized:         row['is_randomized_interval'].to_i == 1 ? :true : :false,
-        duration:           row['durations'].first,
-        queries:            parseInt(row['max_queries']),
-        errors:             parseInt(row['max_errors']),
-        result_rows:        parseInt(row['max_result_rows']),
-        result_bytes:       parseInt(row['max_result_bytes']),
-        read_rows:          parseInt(row['max_read_rows']),
-        read_bytes:         parseInt(row['max_read_bytes']),
-        execution_time:     parseInt(row['max_execution_time']),
-        user:               row['apply_to_list'].sort,
-        keys:               row['keys'].empty?? [ :none ] : row['keys'].sort,
+        ensure:         :present,
+        name:           row['name'],
+        randomized:     row['is_randomized_interval'].to_i == 1 ? :true : :false,
+        duration:       row['durations'].first,
+        queries:        parseInt(row['max_queries']),
+        errors:         parseInt(row['max_errors']),
+        result_rows:    parseInt(row['max_result_rows']),
+        result_bytes:   parseInt(row['max_result_bytes']),
+        read_rows:      parseInt(row['max_read_rows']),
+        read_bytes:     parseInt(row['max_read_bytes']),
+        execution_time: parseInt(row['max_execution_time']),
+        user:           row['apply_to_list'].sort,
+        keys:           row['keys'].empty?? [ :none ] : row['keys'].sort,
       )
     end
   end
