@@ -10,10 +10,6 @@ Puppet::Type.newtype(:clickhouse_profile) do
     desc 'The name of the profile'
   end
 
-  newparam(:id) do
-    desc 'The unique id of the profile'
-  end
-
   newparam(:distributed) do
     desc 'Execute queries using ON CLUSTER statement'
     newvalues(:true, :false)

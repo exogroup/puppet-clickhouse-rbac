@@ -61,10 +61,6 @@ Puppet::Type.newtype(:clickhouse_quota) do
     desc 'The name of the quota'
   end
 
-  newparam(:id) do
-    desc 'The unique id of the quota'
-  end
-
   newparam(:distributed) do
     desc 'Execute queries using ON CLUSTER statement'
     newvalues(:true, :false)
