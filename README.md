@@ -5,12 +5,12 @@
 The `clickhouse-rbac` puppet module allows management of ClickHouse resources such as users, roles, grants,
 quotas and settings profiles using SQL statements.
 
-**NOTE**  
-The code is actually at an early stage of development, so expect some bugs from time to time.
+**DISCLAIMER**  
+The code is actually at an early stage of development, so expect some bugs from time to time.  
 
 ### Compatibility
 
-This module has been with using Puppet v. 5.5.x.
+This module has been using Puppet v. 5.5.x.
 
 ## Usage
 
