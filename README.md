@@ -2,8 +2,15 @@
 
 ## Module Description
 
-The `clickhouse-rbac` puppet module allows management of ClickHouse resources such as users, grants,
+The `clickhouse-rbac` puppet module allows management of ClickHouse resources such as users, roles, grants,
 quotas and settings profiles using SQL statements.
+
+**NOTE**  
+The code is actually at an early stage of development, so expect some bugs from time to time.
+
+### Compatibility
+
+This module has been with using Puppet v. 5.5.x.
 
 ## Usage
 
@@ -51,6 +58,23 @@ Name of the settings profile to associate to the user.
 ###### distributed
 Determine whether to use the `ON CLUSTER` statement for queries. (default: `true`)
 
+#### Roles
+```
+clickhouse_role { 'myrole': 
+  ensure  => 'present',
+  profile => 'myprofile',
+}
+```
+
+##### Parameters
+See: https://clickhouse.tech/docs/en/sql-reference/statements/create/role/
+
+###### ensure
+Defines if the resource should be _present_ or _absent_.
+
+###### profile
+Name of the settings profile to associate to the role.  
+Configuring profile settings directly on role is not (yet?) supported by the module.
 
 #### Grants
 ```
@@ -76,7 +100,7 @@ See:
 Defines if the resource should be _present_ or _absent_.
 
 ###### user
-User to apply the grant on.
+User or Role to apply the grant on.
 
 ###### table
 Table to apply the grant on. Must be in the format `<dbname>.<table>` and wildcard for tables can also be used `<dbname>.*`.
@@ -87,6 +111,34 @@ List of privileges to assign to the grant. Can be specified as `Array` or `Strin
 ###### distributed
 Determine whether to use the `ON CLUSTER` statement for queries. (default: `true`)
 
+
+#### Grant Roles
+```
+# 1. Create the role
+clickhouse_role { 'myrole':
+  profile => 'myprofile',
+}
+
+# 2. Assign proper privileges to the role
+clickhouse_grant { 'myrole/mydb.*':
+  user       => 'myrole',
+  table      => 'mydb.*',
+  privileges => 'SELECT',
+}
+
+# 3. Grant the role to the user(s)
+clickhouse_grant_role { 'myrole':
+  user => 'foo',
+}
+```
+
+##### Parameters
+
+###### ensure
+Defines if the resource should be _present_ or _absent_.
+
+###### user
+User to apply the role on.
 
 #### Profiles
 ```

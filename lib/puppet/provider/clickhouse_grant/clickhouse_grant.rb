@@ -44,8 +44,8 @@ Puppet::Type.type(:clickhouse_grant).provide(:clickhouse, parent: Puppet::Provid
     # Set GRANT OPTION if explicitly requested
     if options.include?('GRANT')
       privileges_full = (Array(privileges) + Array(@property_hash[:privileges])).sort.uniq
-      sql_privileges = privileges_full.join(', ')
-      sql = "GRANT #{on_cluster} #{sql_privileges} ON #{table} TO #{user} WITH GRANT OPTION"
+      privileges_sql = privileges_full.join(', ')
+      sql = "GRANT #{on_cluster} #{privileges_sql} ON #{table} TO #{user} WITH GRANT OPTION"
       query(sql)
     end
   end
@@ -74,20 +74,6 @@ Puppet::Type.type(:clickhouse_grant).provide(:clickhouse, parent: Puppet::Provid
     options = diff(:options)
     revoke(privileges[:revoke], options[:revoke])
     grant(privileges[:grant], options[:grant])
-  end
-
-  # Performs difference between values for a property
-  # in @property_hash and @resource. Returns the values
-  # that need to be revoked and granted.
-  def diff(sym)
-    old_vals = Array(@property_hash[sym])
-    new_vals = Array(@resource[sym])
-
-    result = Hash.new
-    result[:revoke] = old_vals - new_vals
-    result[:grant]  = new_vals - old_vals
-
-    result
   end
 
   # Override setters to avoid changes on @property_hash

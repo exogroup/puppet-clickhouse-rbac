@@ -21,6 +21,20 @@ class Puppet::Provider::Clickhouse < Puppet::Provider
     val.to_i if val
   end
 
+  # Performs difference between values for a property
+  # in @property_hash and @resource. Returns the values
+  # that need to be revoked and granted.
+  def diff(sym)
+    old_vals = Array(@property_hash[sym])
+    new_vals = Array(@resource[sym])
+
+    result = Hash.new
+    result[:revoke] = old_vals - new_vals
+    result[:grant]  = new_vals - old_vals
+
+    result
+  end
+
   # Performs a query in Clickhouse.
   # Supports returning results as-is or in JSON format.
   def self.query(sql, json=false)
@@ -39,18 +53,22 @@ class Puppet::Provider::Clickhouse < Puppet::Provider
   end
 
   # Lists RBAC users
-  def self.users
+  def self.users_and_roles
     sql = (<<~SQL)
       SELECT
         name
       FROM system.users
       WHERE storage = 'local directory'
-      ORDER BY name
+      UNION ALL
+      SELECT
+        name
+      FROM system.roles
+      WHERE storage = 'local directory'
     SQL
 
     begin
       rows = query(sql).split("\n")
-      rows if rows rescue []
+      rows.uniq.sort if rows rescue []
     rescue
       []
     end
@@ -63,8 +81,8 @@ class Puppet::Provider::Clickhouse < Puppet::Provider
   # Lists RBAC grants
   def self.grants
     grants = []
-    users.each do |user|
-      sql = "SHOW GRANTS FOR '#{user}'"
+    users_and_roles.each do |user_or_role|
+      sql = "SHOW GRANTS FOR '#{user_or_role}'"
       begin
         entries = query(sql).split("\n")
         Array(entries).each do |grant|
