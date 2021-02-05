@@ -63,5 +63,5 @@ Puppet::Type.type(:clickhouse_grant_role).provide(:clickhouse, parent: Puppet::P
 
   def user=(x)
   end
-  
+
 end
