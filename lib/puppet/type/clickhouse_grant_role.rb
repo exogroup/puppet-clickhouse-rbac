@@ -32,7 +32,7 @@ Puppet::Type.newtype(:clickhouse_grant_role) do
 
     validate do |value|
       fail("clickhouse_grant_role: `user` parameter requires a value") if (value == :absent or value.strip.empty?) and provider.user == :absent
-      fail("clickhouse_grant_role: `user` parameter must be a String #{value}") unless value == :absent or value.is_a?(String)
+      fail("clickhouse_grant_role: `user` parameter must be a String") unless value == :absent or value.is_a?(String)
     end
   end
 
