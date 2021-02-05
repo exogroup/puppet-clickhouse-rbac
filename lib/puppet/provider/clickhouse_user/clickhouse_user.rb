@@ -23,8 +23,8 @@ Puppet::Type.type(:clickhouse_user).provide(:clickhouse, parent: Puppet::Provide
       # Retrieve password hash from user file.
       # ClickHouse doesn't seem to support retrieving it via SQL.
       # FIXME: Should access dir path be configurable?
-      get_pwd_cmd = "/bin/grep -oP \"BY '\\K[^']+\" /var/lib/clickhouse/access/#{row['id']}.sql | /bin/tr -d '\\n'"
-      password_hash = execute(get_pwd_cmd, :failonfail => false)
+      get_pwd_cmd = "/bin/grep -oP \"BY '\\K[^']+\" /var/lib/clickhouse/access/#{row['id']}.sql"
+      password_hash = execute(get_pwd_cmd, :failonfail => false).strip
       new(
         ensure:        :present,
         password_hash: password_hash,
