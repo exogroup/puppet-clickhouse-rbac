@@ -26,8 +26,8 @@ Puppet::Type.newtype(:clickhouse_role) do
     defaultto :absent
 
     validate do |value|
-      fail('clickhouse_role: `profile` parameter is required') if value == :absent or value.nil? or value.empty?
-      fail('clickhouse_role: `profile` parameter must be a String') unless value.is_a?(String)
+      fail('clickhouse_role: `profile` parameter is required') if (value == :absent or value.strip.empty?) and provider.profile == :absent
+      fail('clickhouse_role: `profile` parameter must be a String') unless value == :absent or value.is_a?(String)
     end
   end
 
