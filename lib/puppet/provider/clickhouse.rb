@@ -39,12 +39,9 @@ class Puppet::Provider::Clickhouse < Puppet::Provider
   # Supports returning results as-is or in JSON format.
   def self.query(sql, json=false)
     sql_flatten = sql.gsub(/[\n|\s]+/,' ').strip
-    opts = [ '--log_queries', '0', '-q', sql_flatten ]
-    if json
-      opts << '--format'
-      opts << 'JSON'
-    end
-    res = clickhouse_client(opts.flatten.compact)
+    opts  = [ '--log_queries', '0', '-q', sql_flatten ]
+    opts += [ '--format', 'JSON' ] if json
+    res = clickhouse_client(opts)
     json ? JSON.parse(res) : res.strip
   end
 
