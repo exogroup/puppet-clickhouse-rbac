@@ -8,13 +8,13 @@ end
 
 require 'json'
 
-def query(sql, to_json=true)
+def query(sql, json=true)
   begin
     sql_formatted = sql.gsub(/\s+|\n/,' ').strip
-    cmd = "clickhouse-client -q '#{sql_formatted}'"
-    cmd << ' --format JSON' if to_json
+    cmd = "clickhouse-client --log_queries 0 -q '#{sql_formatted}'"
+    cmd << ' --format JSON' if json
     result = Facter::Core::Execution.execute(cmd)
-    if to_json
+    if json
       rows = JSON.parse(result)
       rows['data'].count == 1 ? rows['data'].first : rows['data']
     else
