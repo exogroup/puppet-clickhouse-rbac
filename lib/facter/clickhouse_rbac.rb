@@ -1,6 +1,15 @@
 # clickhouse.rb
 # Provide facts relative to current clickhouse node
 
+if Facter::Core::Execution.which('clickhouse-server')
+  Facter.add(:clickhouse_version) do
+    setcode do
+      output = Facter::Core::Execution.execute('clickhouse-server --version 2>/dev/null')
+      $1 if output =~ /version ([^\s]+)/
+    end
+  end
+end
+
 # Restrict fact to clickhouse-client executable presence
 if !Facter::Core::Execution.which('clickhouse-client')
   return
@@ -13,6 +22,7 @@ def query(sql, json=true)
     sql_formatted = sql.gsub(/\s+|\n/,' ').strip
     cmd = "clickhouse-client --log_queries 0 -q '#{sql_formatted}'"
     cmd << ' --format JSON' if json
+    cmd << ' 2>/dev/null'
     result = Facter::Core::Execution.execute(cmd)
     if json
       rows = JSON.parse(result)
@@ -43,12 +53,5 @@ $info.each do |key, val|
     setcode do
       val
     end
-  end
-end
-
-Facter.add(:clickhouse_version) do
-  setcode do
-    val = query('SELECT version()', false)
-    val unless val.empty?
   end
 end
