@@ -5,7 +5,7 @@ if Facter::Core::Execution.which('clickhouse-server')
   Facter.add(:clickhouse_version) do
     setcode do
       output = Facter::Core::Execution.execute('clickhouse-server --version 2>/dev/null')
-      $1 if output =~ /version ([^\s]+)/
+      $1 if output =~ /version (\d+\.\d+\.\d+\.\d+)/
     end
   end
 end
