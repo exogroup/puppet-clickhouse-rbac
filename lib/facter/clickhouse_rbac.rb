@@ -1,6 +1,12 @@
-# clickhouse.rb
 # Provide facts relative to current clickhouse node
 
+# Prevent fact to return if clickhouse-server service is disabled
+if Facter.value(:service_provider) == 'systemd'
+  output = Facter::Core::Execution.execute('systemctl is-enabled clickhouse-server 2>/dev/null')
+  return unless output.match?(/enabled/)
+end
+
+# Retrieve clickhouse-server version
 if Facter::Core::Execution.which('clickhouse-server')
   Facter.add(:clickhouse_version) do
     setcode do
@@ -10,27 +16,18 @@ if Facter::Core::Execution.which('clickhouse-server')
   end
 end
 
-# Restrict fact to clickhouse-client executable presence
-if !Facter::Core::Execution.which('clickhouse-client')
-  return
-end
+# Prevent fact to return if clickhouse-client executable is not available
+return unless Facter::Core::Execution.which('clickhouse-client')
 
 require 'json'
 
-def query(sql, json=true)
+def query(sql)
   begin
     sql_formatted = sql.gsub(/\s+|\n/,' ').strip
-    cmd = "clickhouse-client --log_queries 0 -q '#{sql_formatted}'"
-    cmd << ' --format JSON' if json
-    cmd << ' 2>/dev/null'
+    cmd = "clickhouse-client --log_queries 0 -q '#{sql_formatted}' --format JSON 2>/dev/null"
     result = Facter::Core::Execution.execute(cmd)
-    if json
-      rows = JSON.parse(result)
-      rows['data'].count == 1 ? rows['data'].first : rows['data']
-    else
-      rows = result.split("\n")
-      rows.count == 1 ? rows.first : rows
-    end
+    rows = JSON.parse(result)
+    rows['data']
   rescue
     Hash.new
   end
@@ -45,13 +42,13 @@ sql = (<<~SQL)
   WHERE is_local = 1
 SQL
 
-$info = query(sql)
-$info.each do |key, val|
+# Prevent fact to return if query doesn't return any value
+return unless data = query(sql).first
+
+# Create fact for each column returned by the query
+data.each do |key, val|
   val = val.to_s.strip
   next if val.empty?
-  Facter.add("clickhouse_#{key}".to_sym) do
-    setcode do
-      val
-    end
-  end
+  fact = "clickhouse_#{key}".to_sym
+  Facter.add(fact) { setcode { val } }
 end
