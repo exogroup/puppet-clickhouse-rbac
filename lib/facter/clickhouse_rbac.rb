@@ -1,7 +1,8 @@
 # Provide facts relative to current clickhouse node
 
 # Prevent fact to return if clickhouse-server service is disabled
-if Facter.value(:service_provider) == 'systemd'
+# Ignore this check if systemd is not enabled on this system
+if Facter::Core::Execution.execute('systemctl --version 2>/dev/null')
   output = Facter::Core::Execution.execute('systemctl is-enabled clickhouse-server 2>/dev/null')
   return unless output.match?(/enabled/)
 end
